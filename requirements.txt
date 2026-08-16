@@ -1,1 +1,10 @@
-requests
+# Core runtime dependencies
+requests>=2.25
+PyYAML>=5.4
+
+# Optional (install for full capability, or use: pip install .[full])
+# dnspython>=2.1      # DNS record enumeration in the recon module
+# psutil>=5.8         # host assessment (processes, ports, users)
+# pefile>=2023.2.7    # PE metadata in malware/file triage
+# reportlab>=3.6      # PDF report export
+# yara-python>=4.2    # YARA rule matching
