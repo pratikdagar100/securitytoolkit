@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# Toolkit workspace / secrets / artifacts
+config.yaml
+.security_toolkit/
+cases/
+evidence/
+reports/
+*.db
+*.sqlite3
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/

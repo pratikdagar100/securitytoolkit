@@ -1,0 +1,56 @@
+# CyberShield Investigations Toolkit — configuration
+# Copy to config.yaml (or ~/.security_toolkit/config.yaml) and edit.
+# NEVER commit real API keys. Prefer environment variables:
+#   SECURITY_TOOLKIT_VIRUSTOTAL_API_KEY, SECURITY_TOOLKIT_SHODAN_API_KEY
+
+# Workspace where cases, evidence, database and logs are stored.
+# Leave blank to use ~/.security_toolkit
+workspace: ""
+
+logging:
+  level: INFO            # DEBUG / INFO / WARNING / ERROR
+
+network:
+  default_timeout: 5
+  rate_limit_per_second: 5
+  profiles:
+    QUICK:    { top_ports: 100 }
+    STANDARD: { top_ports: 1000 }
+    DETAILED: { top_ports: 5000 }
+    FORENSIC: { top_ports: 65535 }
+
+web:
+  default_timeout: 10
+  user_agent: "CyberShield-Toolkit/2.0 (+authorized-assessment)"
+
+availability:
+  samples: 15
+  timeout: 5
+
+profiles:
+  default: PASSIVE        # PASSIVE / ASSESSMENT / AUTHORIZED_LAB
+
+# External tool locations. Leave blank to auto-detect on PATH (shutil.which).
+tools:
+  nmap: ""
+  amass: ""
+  nuclei: ""
+  zap: ""                 # e.g. C:\Program Files\ZAP\zap.bat
+  metasploit: ""
+  yara: ""
+
+# Wordlists / payloads. SecLists is the recommended source for passwords,
+# subdomains and patterns:  https://github.com/danielmiessler/SecLists
+wordlists:
+  seclists_path: ""       # e.g. /opt/SecLists  or  C:\tools\SecLists
+  subdomains: ""          # e.g. ${seclists}/Discovery/DNS/subdomains-top1million-5000.txt
+  common_passwords: ""    # e.g. ${seclists}/Passwords/Common-Credentials/10-million-password-list-top-1000.txt
+
+# API keys — fallback only; environment variables take precedence.
+api_keys:
+  virustotal: ""
+  shodan: ""
+
+proxy:
+  http: ""
+  https: ""

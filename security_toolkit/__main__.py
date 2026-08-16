@@ -1,0 +1,5 @@
+"""Enable ``python -m security_toolkit``."""
+from security_toolkit.cli.main import main
+
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())

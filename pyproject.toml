@@ -1,3 +1,48 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "security-toolkit"
+version = "2.0.0"
+description = "CyberShield Investigations Toolkit — modular, cross-platform cyber investigation & security-assessment platform for authorized use."
+readme = "readme.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Pratik Dagar" }]
+keywords = ["security", "osint", "dfir", "soc", "pentest", "investigation", "assessment"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Security",
+    "Intended Audience :: Information Technology",
+]
+dependencies = [
+    "requests>=2.25",
+    "PyYAML>=5.4",
+]
+
+[project.optional-dependencies]
+# Richer capabilities; the toolkit degrades gracefully when these are absent.
+dns = ["dnspython>=2.1"]
+host = ["psutil>=5.8"]
+malware = ["pefile>=2023.2.7"]
+report = ["reportlab>=3.6"]
+yara = ["yara-python>=4.2"]
+full = ["dnspython>=2.1", "psutil>=5.8", "pefile>=2023.2.7", "reportlab>=3.6"]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+security-toolkit = "security_toolkit.cli.main:main"
+cybershield = "security_toolkit.cli.main:main"
+
+[project.urls]
+Homepage = "https://github.com/pratikdagar100/securitytoolkit"
+Repository = "https://github.com/pratikdagar100/securitytoolkit"
+
+[tool.setuptools.packages.find]
+include = ["security_toolkit*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
