@@ -76,6 +76,7 @@ def _run_choice(ws: Workspace, cm: CaseManager, module_name: str) -> None:
 
     for f in result.findings:
         ui.print_finding(f)
+    ui.print_collected(result.raw)
     ui.summarize(result.findings, risk_engine.score(result.findings))
     if result.errors:
         print("\nNotes:")
@@ -126,6 +127,7 @@ def _device_lookup(ws: Workspace, cm: CaseManager) -> None:
         print(ui.c(f"\n[error] {exc}", "HIGH")); return
     for f in result.findings:
         ui.print_finding(f)
+    ui.print_collected(result.raw)
     ui.summarize(result.findings, risk_engine.score(result.findings))
     if result.errors:
         print("\nNotes:")

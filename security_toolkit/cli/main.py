@@ -80,6 +80,7 @@ def _emit(result, output: Optional[str], fmt: str) -> None:
     print(f"\nModule: {result.module}   Target: {result.target}   Profile: {result.profile}\n")
     for f in result.findings:
         ui.print_finding(f)
+    ui.print_collected(result.raw)
     scores = risk_engine.score(result.findings)
     ui.summarize(result.findings, scores)
     if result.errors:

@@ -59,6 +59,50 @@ def print_finding(f: Finding) -> None:
     print(c(rule(), "DIM"))
 
 
+def _render(value, indent: int, lines: List[str], max_items: int = 12) -> None:
+    pad = "  " * indent
+    if isinstance(value, dict):
+        for k, v in value.items():
+            if isinstance(v, (dict, list)) and v:
+                lines.append(f"{pad}{c(str(k), 'BOLD')}:")
+                _render(v, indent + 1, lines, max_items)
+            else:
+                shown = v if not isinstance(v, (dict, list)) else "(empty)"
+                lines.append(f"{pad}{c(str(k), 'BOLD')}: {str(shown)[:200]}")
+    elif isinstance(value, list):
+        for item in value[:max_items]:
+            if isinstance(item, (dict, list)):
+                _render(item, indent, lines, max_items)
+                lines.append(f"{pad}{c('-', 'DIM')}")
+            else:
+                lines.append(f"{pad}- {str(item)[:200]}")
+        if len(value) > max_items:
+            lines.append(f"{pad}{c(f'... (+{len(value) - max_items} more)', 'DIM')}")
+    else:
+        lines.append(f"{pad}{str(value)[:200]}")
+
+
+def print_collected(raw: Dict) -> None:
+    """Show the raw information a module gathered (not just findings)."""
+    if not raw:
+        return
+    # Keep the console readable: skip bulky internal blobs.
+    skip = {"strings_sample", "processes"}
+    visible = {k: v for k, v in raw.items() if k not in skip and v not in (None, "", [], {})}
+    if not visible:
+        return
+    print("\n" + c(rule("="), "DIM"))
+    print(c("COLLECTED INFORMATION", "BOLD"))
+    print(c(rule("="), "DIM"))
+    lines: List[str] = []
+    _render(visible, 1, lines)
+    print("\n".join(lines))
+    # Note any large sections we intentionally summarized instead of dumping.
+    if "processes" in raw:
+        print(f"  {c('processes', 'BOLD')}: {raw.get('process_count', len(raw['processes']))} "
+              f"(full list stored in the case evidence)")
+
+
 def summarize(findings: List[Finding], scores: Dict) -> None:
     hist = scores["severity_histogram"]
     parts = []
