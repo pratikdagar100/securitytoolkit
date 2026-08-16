@@ -38,6 +38,8 @@ tools:
   zap: ""                 # e.g. C:\Program Files\ZAP\zap.bat
   metasploit: ""
   yara: ""
+  oui_file: ""            # optional IEEE oui.txt for full MAC-vendor coverage
+                          # (download: https://standards-oui.ieee.org/oui/oui.txt)
 
 # Wordlists / payloads. SecLists is the recommended source for passwords,
 # subdomains and patterns:  https://github.com/danielmiessler/SecLists

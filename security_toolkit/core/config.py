@@ -42,6 +42,7 @@ DEFAULTS: Dict[str, Any] = {
         "amass": "",
         "nuclei": "",
         "yara": "",
+        "oui_file": "",  # optional IEEE oui.txt for full MAC-vendor coverage
     },
     "wordlists": {
         # SecLists is the recommended source of passwords / patterns / payloads.

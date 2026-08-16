@@ -25,10 +25,11 @@ MENU = """
   9.  Log & SOC Analysis              Scan a log file for brute-force logins and scanning attempts
  10.  Host Security Assessment        Inspect THIS computer: processes, listening ports, users
  11.  Malware / File Triage           Safely examine a file (hashes, strings) without running it
- 12.  Evidence Management             List the evidence collected and stored for a case
- 13.  Generate Report                 Build a JSON/CSV/HTML/PDF report for a case
- 14.  External Tools Status           Show which optional tools (Nmap, Amass, ...) are installed
- 15.  Configuration                   Show where your workspace and settings live
+ 12.  Device Info (MAC lookup)        Identify a device from its MAC address (+ optional IP)
+ 13.  Evidence Management             List the evidence collected and stored for a case
+ 14.  Generate Report                 Build a JSON/CSV/HTML/PDF report for a case
+ 15.  External Tools Status           Show which optional tools (Nmap, Amass, ...) are installed
+ 16.  Configuration                   Show where your workspace and settings live
   0.  Exit                            Quit the toolkit
 """
 
@@ -111,6 +112,31 @@ def _case_menu(cm: CaseManager) -> None:
                 print(f"  {k}: {v}")
 
 
+def _device_lookup(ws: Workspace, cm: CaseManager) -> None:
+    mac = _ask("MAC address (e.g. AA:BB:CC:DD:EE:FF)")
+    if not mac:
+        print("No MAC provided."); return
+    ip = _ask("Device IP (optional, press Enter to skip)")
+    case_id = _ask("Case id (blank to skip saving)")
+    auth = AuthorizationContext(profile="PASSIVE", case_id=case_id, user=ws.user)
+    module = registry.get_module("device")(ws.config)
+    try:
+        result = module.run(mac, auth, ip=ip or None)
+    except Exception as exc:
+        print(ui.c(f"\n[error] {exc}", "HIGH")); return
+    for f in result.findings:
+        ui.print_finding(f)
+    ui.summarize(result.findings, risk_engine.score(result.findings))
+    if result.errors:
+        print("\nNotes:")
+        for e in result.errors:
+            print(f"  - {e}")
+    if case_id:
+        from security_toolkit.cli.main import _persist
+        _persist(ws, case_id, result, "device")
+        print(ui.c(f"\nSaved to case {case_id}.", "GREEN"))
+
+
 def interactive_menu(config_path: Optional[str] = None) -> int:
     ws = Workspace(load_config(config_path))
     cm = CaseManager(ws)
@@ -126,10 +152,12 @@ def interactive_menu(config_path: Optional[str] = None) -> int:
             elif choice in MODULE_FOR_CHOICE:
                 _run_choice(ws, cm, MODULE_FOR_CHOICE[choice])
             elif choice == "12":
+                _device_lookup(ws, cm)
+            elif choice == "13":
                 case_id = _ask("Case id")
                 for r in ws.db.list_evidence(case_id):
                     print(f"  {r['evidence_id']}  {r['source']}  {r['sha256'][:16]}…")
-            elif choice == "13":
+            elif choice == "14":
                 from security_toolkit.reporting import build_report_data, Reporter
                 case_id = _ask("Case id")
                 case = cm.get_case(case_id)
@@ -143,11 +171,11 @@ def interactive_menu(config_path: Optional[str] = None) -> int:
                 out.parent.mkdir(parents=True, exist_ok=True)
                 Reporter(data).to_html(out)
                 print(ui.c(f"Report: {out}", "GREEN"))
-            elif choice == "14":
+            elif choice == "15":
                 from security_toolkit.cli.main import cmd_tools
                 import argparse
                 cmd_tools(argparse.Namespace(config=config_path))
-            elif choice == "15":
+            elif choice == "16":
                 print(f"  workspace: {ws.root}")
                 print(f"  config:    {ws.config.source or '(defaults)'}")
             else:

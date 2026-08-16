@@ -18,6 +18,7 @@ from security_toolkit.modules.availability import AvailabilityModule
 from security_toolkit.modules.logs import LogAnalysisModule
 from security_toolkit.modules.host import HostModule
 from security_toolkit.modules.malware import MalwareModule
+from security_toolkit.modules.device import DeviceModule
 
 _REGISTRY: Dict[str, Type] = {
     "recon": ReconModule,
@@ -31,6 +32,7 @@ _REGISTRY: Dict[str, Type] = {
     "host": HostModule,
     "file": MalwareModule,
     "malware": MalwareModule,
+    "device": DeviceModule,
 }
 
 

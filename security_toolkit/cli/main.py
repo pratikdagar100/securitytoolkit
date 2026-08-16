@@ -341,6 +341,18 @@ def build_parser() -> argparse.ArgumentParser:
             sp.add_argument("--lab", action="store_true",
                            help="AUTHORIZED_LAB mode (requires --profile-auth AUTHORIZED_LAB)")
 
+    # device lookup by MAC (+ optional IP)
+    pd = sub.add_parser("device", help="device lookup by MAC address (+ optional IP)")
+    pd.add_argument("--mac", dest="target", required=True,
+                    help="MAC address, e.g. AA:BB:CC:DD:EE:FF")
+    pd.add_argument("--ip", help="optional IP for reverse DNS / reachability / port hints")
+    pd.add_argument("--case"); pd.add_argument("--profile-auth", dest="profile_auth",
+                                              choices=PROFILES)
+    pd.add_argument("--authorized", action="store_true"); pd.add_argument("--yes",
+                                                                          action="store_true")
+    pd.add_argument("--output"); pd.add_argument("--format", default="json")
+    pd.add_argument("--config")
+
     # report / evidence / tools / config
     pr = sub.add_parser("report", help="generate a case report")
     pr.add_argument("--case", required=True)
@@ -366,7 +378,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 SCAN_COMMANDS = {"recon", "network", "web", "api", "sqli", "xss",
-                 "availability", "logs", "host", "file"}
+                 "availability", "logs", "host", "file", "device"}
 
 
 def _dispatch(args: argparse.Namespace) -> int:
@@ -387,6 +399,8 @@ def _dispatch(args: argparse.Namespace) -> int:
             opts["profile"] = args.profile
         if getattr(args, "lab", False):
             opts["lab"] = True
+        if getattr(args, "ip", None):
+            opts["ip"] = args.ip
         return _run_module(args, args.command, **opts)
     return 0
 

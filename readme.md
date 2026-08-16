@@ -44,6 +44,7 @@ through pluggable adapters.
 | `logs` | mini-SIEM: brute-force, credential-stuffing, HTTP scanning | native |
 | `host` | local processes, listening ports, users, config | native + optional psutil |
 | `file` | hashes, entropy, strings, PE metadata, VirusTotal | native + optional pefile/VT |
+| `device` | MAC → vendor (OUI), randomized-MAC detection, ARP→IP, optional IP details | native + optional online OUI |
 
 Detection is always distinguished from confirmed compromise: lower-confidence
 findings are labelled as indicators requiring analyst validation.

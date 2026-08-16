@@ -49,10 +49,11 @@ You'll see a menu with a short explanation next to every option:
  9.  Log & SOC Analysis              Scan a log file for brute-force logins and scanning attempts
 10.  Host Security Assessment        Inspect THIS computer: processes, listening ports, users
 11.  Malware / File Triage           Safely examine a file (hashes, strings) without running it
-12.  Evidence Management             List the evidence collected and stored for a case
-13.  Generate Report                 Build a JSON/CSV/HTML/PDF report for a case
-14.  External Tools Status           Show which optional tools (Nmap, Amass, ...) are installed
-15.  Configuration                   Show where your workspace and settings live
+12.  Device Info (MAC lookup)        Identify a device from its MAC address (+ optional IP)
+13.  Evidence Management             List the evidence collected and stored for a case
+14.  Generate Report                 Build a JSON/CSV/HTML/PDF report for a case
+15.  External Tools Status           Show which optional tools (Nmap, Amass, ...) are installed
+16.  Configuration                   Show where your workspace and settings live
  0.  Exit                            Quit the toolkit
 ```
 
@@ -60,7 +61,32 @@ Type a number, press Enter, and answer the questions it asks (like "what website
 The toolkit does the rest and shows you the results. To leave, type `0`.
 
 **Tip:** A good order to try is `1` (make a case) → `2` (look things up) →
-`4` (check a website) → `13` (make a report).
+`4` (check a website) → `14` (make a report).
+
+### About option 12 — Device Info (MAC lookup)
+
+You type a device's **MAC address** (like `AA:BB:CC:DD:EE:FF`) and it tells you:
+
+- the **manufacturer** of the device (Apple, Samsung, TP-Link, a VM, etc.),
+- whether the MAC looks **randomized/virtual** (many phones and laptops hide their
+  real MAC for privacy),
+- and — if the device is on **your own network** — it finds its **IP address**
+  automatically from your computer's ARP table.
+
+You can also type the device's **IP** (optional) to get its name (reverse DNS),
+whether it's local or public, and which common ports are open.
+
+> **Honest note:** a MAC address by itself only reveals the *maker* of the device.
+> It cannot be traced over the internet — the device must be on your local network
+> (or you must know its IP) to learn more. That's a limitation of how networks work,
+> not of the tool.
+
+Command-line version:
+
+```bash
+security-toolkit device --mac AA:BB:CC:DD:EE:FF
+security-toolkit device --mac AA:BB:CC:DD:EE:FF --ip 192.168.1.42   # more detail
+```
 
 **That's all most people need.** The sections below are for doing it by typing commands.
 
