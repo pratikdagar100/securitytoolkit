@@ -38,8 +38,8 @@ security-toolkit = "security_toolkit.cli.main:main"
 cybershield = "security_toolkit.cli.main:main"
 
 [project.urls]
-Homepage = "https://github.com/pratikdagar100/security-toolkit"
-Repository = "https://github.com/pratikdagar100/security-toolkit"
+Homepage = "https://github.com/pratikdagar100/securitytoolkit"
+Repository = "https://github.com/pratikdagar100/securitytoolkit"
 
 [tool.setuptools.packages.find]
 include = ["security_toolkit*"]

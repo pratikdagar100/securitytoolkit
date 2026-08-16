@@ -54,11 +54,11 @@ findings are labelled as indicators requiring analyst validation.
 
 ```bash
 # From GitHub
-pip install git+https://github.com/pratikdagar100/security-toolkit.git
+pip install git+https://github.com/pratikdagar100/securitytoolkit.git
 
 # Or clone for development
-git clone https://github.com/pratikdagar100/security-toolkit.git
-cd security-toolkit
+git clone https://github.com/pratikdagar100/securitytoolkit.git
+cd securitytoolkit
 pip install -e .            # core (requests, PyYAML)
 pip install -e .[full]      # + dnspython, psutil, pefile, reportlab
 ```
