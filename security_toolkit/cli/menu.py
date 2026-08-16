@@ -12,22 +12,24 @@ from security_toolkit.modules import registry
 from security_toolkit.cli import ui
 
 MENU = """
-1. Case Management
-2. Reconnaissance / OSINT
-3. Network Assessment
-4. Website Security Assessment
-5. SQL Injection Exposure Check
-6. XSS Exposure Check
-7. API Security Assessment
-8. Availability / DoS Symptom Analysis
-9. Log & SOC Analysis
-10. Host Security Assessment
-11. Malware / File Triage
-12. Evidence Management
-13. Generate Report
-14. External Tools Status
-15. Configuration
-0. Exit
+   #  Option                          What it does
+ ---  ------------------------------  --------------------------------------------------
+  1.  Case Management                 Create/list cases and mark which targets you may test
+  2.  Reconnaissance / OSINT          Passively look up public info (DNS, IP, WHOIS, certificate)
+  3.  Network Assessment              Find open ports and running services on a host/network
+  4.  Website Security Assessment     Check a site's headers, HTTPS, cookies, CORS, TLS certificate
+  5.  SQL Injection Exposure Check    Safely test URL parameters for signs of SQL injection
+  6.  XSS Exposure Check              Safely test URL parameters for reflected cross-site scripting
+  7.  API Security Assessment         Check an API's methods, auth, headers and rate limiting
+  8.  Availability / DoS Symptom      Measure response time/failures to spot slowness (not an attack)
+  9.  Log & SOC Analysis              Scan a log file for brute-force logins and scanning attempts
+ 10.  Host Security Assessment        Inspect THIS computer: processes, listening ports, users
+ 11.  Malware / File Triage           Safely examine a file (hashes, strings) without running it
+ 12.  Evidence Management             List the evidence collected and stored for a case
+ 13.  Generate Report                 Build a JSON/CSV/HTML/PDF report for a case
+ 14.  External Tools Status           Show which optional tools (Nmap, Amass, ...) are installed
+ 15.  Configuration                   Show where your workspace and settings live
+  0.  Exit                            Quit the toolkit
 """
 
 MODULE_FOR_CHOICE = {
