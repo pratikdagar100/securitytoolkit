@@ -52,18 +52,126 @@ class NetworkModule(SecurityModule):
 
     def run(self, target: str, auth: AuthorizationContext, **options: Any) -> ScanResult:
         auth.authorize(target, "network scan", self.operation_class)
-        profile = (options.get("profile") or auth.profile or "STANDARD").upper()
+        # Scan profile is distinct from the *authorization* profile: default to
+        # STANDARD unless the caller explicitly picks QUICK/DETAILED/FORENSIC.
+        profile = (options.get("profile") or "STANDARD").upper()
+        if profile not in PROFILE_PORTS:
+            profile = "STANDARD"
         result = ScanResult(module=self.name, target=target, profile=profile)
+
+        from security_toolkit.core import target_validator
+        classified = target_validator.classify(target)
+        single_host = classified.target_type != "cidr"
+
+        # Always gather host/device info for a single host, even if no ports open.
+        if single_host:
+            self._host_info(target, result, auth)
 
         use_nmap = bool(options.get("use_nmap", True))
         nmap_result = None
         if use_nmap:
             nmap_result = self._try_nmap(target, profile, result, auth)
-
         if nmap_result is None:
             self._native_scan(target, profile, result, auth)
 
+        # Always summarize what the scan actually did (so results are never blank).
+        if single_host:
+            self._scan_summary(result, auth, profile)
         return result
+
+    # -- host / device profiling ----------------------------------------
+    def _host_info(self, target: str, result: ScanResult,
+                   auth: AuthorizationContext) -> None:
+        from security_toolkit.core import target_validator
+        from security_toolkit.modules.device import arp_table, vendor_for_mac
+        host = target_validator._host_of(target)
+
+        info: Dict[str, Any] = {"host": host}
+        # Resolve to IP
+        try:
+            ip = socket.gethostbyname(host)
+            info["ip"] = ip
+        except Exception:
+            ip = host
+            info["ip"] = host
+
+        # Reverse DNS
+        try:
+            rdns, *_ = socket.gethostbyaddr(ip)
+            info["hostname"] = rdns
+        except Exception:
+            info["hostname"] = ""
+
+        # Reachability + latency via TCP connect to common ports.
+        up, latency_ms, via_port = self._reachability(ip)
+        info["reachable"] = up
+        info["latency_ms"] = latency_ms
+
+        # LAN MAC + vendor from the ARP cache.
+        mac, vendor = "", ""
+        for entry in arp_table():
+            if entry["ip"] == ip:
+                mac = entry["mac"]
+                vendor = vendor_for_mac(mac) or ""
+                break
+        info["mac"] = mac
+        info["vendor"] = vendor
+        result.raw["host_info"] = info
+
+        parts = [f"IP {info['ip']}"]
+        if info.get("hostname"):
+            parts.append(f"hostname {info['hostname']}")
+        if mac:
+            parts.append(f"MAC {mac}" + (f" ({vendor})" if vendor else " (vendor unknown)"))
+        parts.append("reachable" if up else "no TCP response on probed ports")
+        if up and latency_ms is not None:
+            parts.append(f"~{latency_ms} ms (port {via_port})")
+
+        result.add(make_finding(
+            "Device / host information", "NETWORK", "INFO", "HIGH",
+            target=info["ip"], evidence="; ".join(parts) + ".",
+            recommendation="Confirm this is an expected device on your network.",
+            module=self.name, case_id=auth.case_id))
+
+        if not up:
+            result.add(make_finding(
+                "Host did not respond on probed TCP ports", "NETWORK", "INFO", "MEDIUM",
+                target=info["ip"],
+                evidence="No TCP handshake completed on common ports. The host may be "
+                         "offline, firewalled, or only running non-TCP/uncommon services.",
+                impact="A firewalled host with no open common ports is a normal, healthy "
+                       "state -- it is not a vulnerability.",
+                recommendation="Try a DETAILED/FORENSIC profile, or scan from the same LAN "
+                               "segment, if you expect services here.",
+                module=self.name, case_id=auth.case_id))
+
+    @staticmethod
+    def _reachability(ip: str):
+        import time
+        for port in (80, 443, 22, 445, 3389, 8080, 53, 139):
+            start = time.monotonic()
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(1.0)
+                if s.connect_ex((ip, port)) == 0:
+                    return True, round((time.monotonic() - start) * 1000, 1), port
+        return False, None, None
+
+    def _scan_summary(self, result: ScanResult, auth: AuthorizationContext,
+                      profile: str) -> None:
+        hosts = result.raw.get("hosts", []) or []
+        open_count = sum(len(h.get("ports", [])) for h in hosts)
+        backend = result.raw.get("backend", "native")
+        ports_scanned = (len(PROFILE_PORTS.get(profile, COMMON_PORTS))
+                         if backend != "nmap" else "nmap profile set")
+        result.add(make_finding(
+            f"Scan summary: {open_count} open port(s) found", "NETWORK", "INFO", "HIGH",
+            target=result.target,
+            evidence=f"Backend={backend}, profile={profile}, ports probed={ports_scanned}, "
+                     f"open ports={open_count}.",
+            recommendation=("Review the open-port findings above."
+                            if open_count else
+                            "No open ports were found in this profile's port set."),
+            module=self.name, case_id=auth.case_id))
 
     # -- nmap backend ----------------------------------------------------
     def _try_nmap(self, target: str, profile: str, result: ScanResult,

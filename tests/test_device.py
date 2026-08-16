@@ -1,7 +1,7 @@
 import pytest
 
 from security_toolkit.core.authorization import AuthorizationContext
-from security_toolkit.modules.device import normalize_mac, DeviceModule
+from security_toolkit.modules.device import normalize_mac, vendor_for_mac, DeviceModule
 
 
 @pytest.mark.parametrize("raw,expected", [
@@ -31,6 +31,12 @@ def test_known_vendor_lookup():
     assert result.raw["mac"]["vendor"] == "VMware"
     titles = " ".join(f.title for f in result.findings)
     assert "vendor" in titles.lower()
+
+
+def test_vendor_for_mac_helper():
+    assert vendor_for_mac("00:0C:29:11:22:33") == "VMware"
+    assert vendor_for_mac("02:11:22:33:44:55") is None  # locally administered
+    assert vendor_for_mac("bad") is None
 
 
 def test_locally_administered_flagged():

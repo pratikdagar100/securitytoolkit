@@ -88,6 +88,42 @@ def normalize_mac(raw: str) -> Optional[str]:
     return ":".join(h.upper() for h in hexes)
 
 
+def arp_table() -> List[Dict[str, str]]:
+    """Parse the local ARP cache into [{ip, mac, type}] (cross-platform).
+
+    Handles Windows (`192.168.0.1  aa-bb-cc-dd-ee-ff  dynamic`) and
+    Unix/mac (`? (192.168.0.1) at aa:bb:cc:dd:ee:ff [ether] on en0`).
+    """
+    rows: List[Dict[str, str]] = []
+    try:
+        proc = subprocess.run(["arp", "-a"], capture_output=True, text=True,
+                              timeout=8, check=False)
+        out = proc.stdout or ""
+    except Exception:
+        return rows
+    for line in out.splitlines():
+        macs = re.findall(r"(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}", line)
+        ips = re.findall(r"\d{1,3}(?:\.\d{1,3}){3}", line)
+        if not macs or not ips:
+            continue
+        entry = {"ip": ips[0], "mac": normalize_mac(macs[0]) or macs[0]}
+        low = line.lower()
+        entry["type"] = "static" if "static" in low else "dynamic"
+        rows.append(entry)
+    return rows
+
+
+def vendor_for_mac(mac: str) -> Optional[str]:
+    """Offline vendor lookup from the bundled OUI table (no network call)."""
+    norm = normalize_mac(mac)
+    if not norm:
+        return None
+    first_octet = int(norm.split(":")[0], 16)
+    if first_octet & 0x02:  # locally administered -> not a real vendor
+        return None
+    return COMMON_OUI.get(norm.replace(":", "")[:6])
+
+
 class DeviceModule:
     name = "device"
     description = "Device lookup by MAC address (vendor, ARP, optional IP details)"
@@ -240,25 +276,10 @@ class DeviceModule:
     def _arp_lookup(self, mac: str) -> List[Dict[str, str]]:
         target_norm = mac.lower().replace(":", "").replace("-", "")
         matches: List[Dict[str, str]] = []
-        try:
-            proc = subprocess.run(["arp", "-a"], capture_output=True, text=True,
-                                  timeout=8, check=False)
-            out = proc.stdout or ""
-        except Exception:
-            return matches
-        for line in out.splitlines():
-            macs = re.findall(r"([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}", line)
-            # re.findall with a group returns the group; re-extract full tokens:
-            found = re.findall(r"(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}", line)
-            ips = re.findall(r"\d{1,3}(?:\.\d{1,3}){3}", line)
-            for token in found:
-                if token.lower().replace(":", "").replace("-", "") == target_norm and ips:
-                    entry = {"ip": ips[0], "mac": mac}
-                    if "dynamic" in line.lower():
-                        entry["type"] = "dynamic"
-                    elif "static" in line.lower():
-                        entry["type"] = "static"
-                    matches.append(entry)
+        for entry in arp_table():
+            if entry["mac"].lower().replace(":", "").replace("-", "") == target_norm:
+                matches.append({"ip": entry["ip"], "mac": mac,
+                                "type": entry.get("type", "dynamic")})
         return matches
 
     # -- IP details ------------------------------------------------------
